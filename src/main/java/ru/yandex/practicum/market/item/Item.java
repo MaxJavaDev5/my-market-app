@@ -22,6 +22,7 @@ public class Item {
 	@Column(nullable = false)
 	private long price;
 
+	@Transient
 	private int count;
 
 	public Long getId() {
