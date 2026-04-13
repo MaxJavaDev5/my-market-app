@@ -26,7 +26,7 @@ public class ItemController {
 
 	@GetMapping({"/", "/items"})
 	public String getItems(
-			@RequestParam String search,
+			@RequestParam(required = false) String search,
 			@RequestParam(defaultValue = "NO") String sort,
 			@RequestParam(defaultValue = "1") int pageNumber,
 			@RequestParam(defaultValue = "5") int pageSize,
