@@ -1,6 +1,7 @@
 package ru.yandex.practicum.market.item;
 
 import ru.yandex.practicum.market.cart.CartService;
+import ru.yandex.practicum.market.cart.CartAction;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -80,7 +81,7 @@ class ItemControllerTest {
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/items?search=&sort=NO&pageNumber=1&pageSize=5"));
 
-		verify(cartService).updateCart(1L, "MINUS");
+		verify(cartService).updateCart(1L, CartAction.MINUS);
 	}
 
 	@Test
@@ -95,7 +96,7 @@ class ItemControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(view().name("item"));
 
-		verify(cartService).updateCart(7L, "PLUS");
+		verify(cartService).updateCart(7L, CartAction.PLUS);
 		verify(itemService).findById(7L);
 	}
 }

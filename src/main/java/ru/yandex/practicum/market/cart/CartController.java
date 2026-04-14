@@ -25,7 +25,7 @@ public class CartController {
 	@PostMapping("/cart/items")
 	public String updateCart(
 			@RequestParam Long id,
-			@RequestParam String action,
+			@RequestParam CartAction action,
 			Model model
 	) {
 		cartService.updateCart(id, action);

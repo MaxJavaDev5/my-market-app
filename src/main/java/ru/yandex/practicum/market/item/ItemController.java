@@ -1,6 +1,7 @@
 package ru.yandex.practicum.market.item;
 
 import ru.yandex.practicum.market.Paging;
+import ru.yandex.practicum.market.cart.CartAction;
 import ru.yandex.practicum.market.cart.CartService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -67,7 +68,7 @@ public class ItemController {
 			@RequestParam(defaultValue = "NO") String sort,
 			@RequestParam(defaultValue = "1") int pageNumber,
 			@RequestParam(defaultValue = "5") int pageSize,
-			@RequestParam String action
+			@RequestParam CartAction action
 	) {
 		cartService.updateCart(id, action);
 		return "redirect:/items?search=" + (search != null ? search : "")
@@ -85,7 +86,7 @@ public class ItemController {
 	@PostMapping("/items/{id}")
 	public String updateCartFromItem(
 			@PathVariable Long id,
-			@RequestParam String action,
+			@RequestParam CartAction action,
 			Model model
 	) {
 		cartService.updateCart(id, action);

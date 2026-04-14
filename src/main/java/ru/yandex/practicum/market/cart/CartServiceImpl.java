@@ -21,11 +21,11 @@ public class CartServiceImpl implements CartService {
 
 	@Override
 	@Transactional
-	public void updateCart(Long itemId, String action)
+	public void updateCart(Long itemId, CartAction action)
 	{
 		CartItem cartItem = cartRepository.findByItemId(itemId);
 
-		if ("PLUS".equals(action)) {
+		if (CartAction.PLUS == action) {
 			if (cartItem == null) {
 				cartItem = new CartItem();
 				cartItem.setItemId(itemId);
@@ -35,7 +35,7 @@ public class CartServiceImpl implements CartService {
 			}
 			cartRepository.save(cartItem);
 
-		} else if ("MINUS".equals(action)) {
+		} else if (CartAction.MINUS == action) {
 			if (cartItem != null) {
 				if (cartItem.getCount() <= 1) {
 					cartRepository.delete(cartItem);
@@ -45,7 +45,7 @@ public class CartServiceImpl implements CartService {
 				}
 			}
 
-		} else if ("DELETE".equals(action)) {
+		} else if (CartAction.DELETE == action) {
 			if (cartItem != null) {
 				cartRepository.delete(cartItem);
 			}

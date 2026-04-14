@@ -2,6 +2,7 @@ package ru.yandex.practicum.market.order;
 
 import ru.yandex.practicum.market.cart.CartRepository;
 import ru.yandex.practicum.market.cart.CartService;
+import ru.yandex.practicum.market.cart.CartAction;
 import ru.yandex.practicum.market.item.Item;
 import ru.yandex.practicum.market.item.ItemRepository;
 import org.junit.jupiter.api.Test;
@@ -47,8 +48,8 @@ class OrderServiceTest {
 	@Test
 	void order_createOrder_copiesCartLineItemsAndClearsCart() {
 		Item product = saveProduct("Product_Order_Cart", 100L);
-		cartService.updateCart(product.getId(), "PLUS");
-		cartService.updateCart(product.getId(), "PLUS");
+		cartService.updateCart(product.getId(), CartAction.PLUS);
+		cartService.updateCart(product.getId(), CartAction.PLUS);
 
 		Order created = orderService.createOrder();
 
@@ -61,7 +62,7 @@ class OrderServiceTest {
 	@Test
 	void order_findById_returnsPersistedOrder() {
 		Item product = saveProduct("Product_Order_FindById", 50L);
-		cartService.updateCart(product.getId(), "PLUS");
+		cartService.updateCart(product.getId(), CartAction.PLUS);
 		Order created = orderService.createOrder();
 
 		Order found = orderService.findById(created.getId());
@@ -82,13 +83,13 @@ class OrderServiceTest {
 		Item productOne = saveProduct("Product_Order_Sum_One", 10L);
 		Item productTwo = saveProduct("Product_Order_Sum_Two", 5L);
 
-		cartService.updateCart(productOne.getId(), "PLUS");
-		cartService.updateCart(productOne.getId(), "PLUS");
+		cartService.updateCart(productOne.getId(), CartAction.PLUS);
+		cartService.updateCart(productOne.getId(), CartAction.PLUS);
 		orderService.createOrder();
 
-		cartService.updateCart(productTwo.getId(), "PLUS");
-		cartService.updateCart(productTwo.getId(), "PLUS");
-		cartService.updateCart(productTwo.getId(), "PLUS");
+		cartService.updateCart(productTwo.getId(), CartAction.PLUS);
+		cartService.updateCart(productTwo.getId(), CartAction.PLUS);
+		cartService.updateCart(productTwo.getId(), CartAction.PLUS);
 		orderService.createOrder();
 
 		List<Order> orders = orderService.findAll();
