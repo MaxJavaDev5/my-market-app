@@ -35,6 +35,10 @@ public class Order {
 		this.items = items;
 	}
 
+	public long getTotalSum() {
+		return totalSum;
+	}
+
 	public void setTotalSum(long totalSum) {
 		this.totalSum = totalSum;
 	}

@@ -37,7 +37,17 @@ public class Item {
 		this.title = title;
 	}
 
-	public void setDescription(String description) {this.description = description;}
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getImgPath() {
+		return imgPath;
+	}
 
 	public void setImgPath(String imgPath) {
 		this.imgPath = imgPath;
