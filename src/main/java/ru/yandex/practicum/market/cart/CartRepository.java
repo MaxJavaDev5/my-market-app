@@ -1,26 +1,9 @@
 package ru.yandex.practicum.market.cart;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
+public interface CartRepository extends ReactiveCrudRepository<CartItem, Long> {
 
-@Repository
-public interface CartRepository extends JpaRepository<CartItem, Long> {
-
-	@Override
-	CartItem save(CartItem entity);
-
-	@Override
-	void delete(CartItem entity);
-
-	@Override
-	List<CartItem> findAll();
-
-	@Override
-	void deleteAll();
-
-	void deleteByItemId(Long itemId);
-
-	CartItem findByItemId(Long itemId);
+	Mono<CartItem> findByItemId(Long itemId);
 }
