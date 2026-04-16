@@ -1,12 +1,13 @@
 package ru.yandex.practicum.market.order;
 
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface OrderService {
 
-	Order createOrder();
+	Mono<Order> createOrder();
 
-	Order findById(Long id);
+	Mono<Order> findById(Long id);
 
-	List<Order> findAll();
+	Flux<Order> findAll();
 }
