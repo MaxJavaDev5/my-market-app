@@ -1,25 +1,9 @@
 package ru.yandex.practicum.market.item;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 
-import java.util.List;
-import java.util.Optional;
+public interface ItemRepository extends ReactiveCrudRepository<Item, Long> {
 
-@Repository
-public interface ItemRepository extends JpaRepository<Item, Long> {
-
-	@Override
-	Item save(Item entity);
-
-	@Override
-	Optional<Item> findById(Long id);
-
-	@Override
-	List<Item> findAll();
-
-	@Override
-	Item getReferenceById(Long id);
-
-	List<Item> findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String title, String description);
+	Flux<Item> findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String title, String description);
 }
