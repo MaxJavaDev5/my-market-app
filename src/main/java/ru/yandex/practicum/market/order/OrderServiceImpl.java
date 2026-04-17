@@ -53,6 +53,7 @@ public class OrderServiceImpl implements OrderService {
 
 	private Mono<Order> loadOrderWithItems(Long id) {
 		return orderRepository.findById(id)
+				.switchIfEmpty(Mono.error(new RuntimeException("Order not found: " + id)))
 				.flatMap(order -> orderItemRepository.findByOrderId(order.getId())
 						.flatMap(line -> itemRepository.findById(line.getItemId())
 								.map(item -> {
