@@ -1,11 +1,12 @@
 package ru.yandex.practicum.market.order;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Mono;
 
 @Controller
 public class OrderController {
@@ -17,29 +18,29 @@ public class OrderController {
 	}
 
 	@GetMapping("/orders")
-	public String getOrders(Model model) {
-		model.addAttribute("orders", orderService.findAll());
-		return "orders";
+	public Mono<Rendering> getOrders() {
+		return orderService.findAll()
+				.collectList()
+				.map(orders -> Rendering.view("orders")
+						.modelAttribute("orders", orders)
+						.build());
 	}
 
 	@GetMapping("/orders/{id}")
-	public String getOrder(
+	public Mono<Rendering> getOrder(
 			@PathVariable Long id,
-			@RequestParam(defaultValue = "false") boolean newOrder,
-			Model model
+			@RequestParam(defaultValue = "false") boolean newOrder
 	) {
-		Order order = orderService.findById(id);
-		long total = order.getItems().stream()
-				.mapToLong(orderItem -> orderItem.getItem().getPrice() * orderItem.getCount()).sum();
-		order.setTotalSum(total);
-		model.addAttribute("order", order);
-		model.addAttribute("newOrder", newOrder);
-		return "order";
+		return orderService.findById(id)
+				.map(order -> Rendering.view("order")
+						.modelAttribute("order", order)
+						.modelAttribute("newOrder", newOrder)
+						.build());
 	}
 
 	@PostMapping("/buy")
-	public String buy() {
-		Order order = orderService.createOrder();
-		return "redirect:/orders/" + order.getId() + "?newOrder=true";
+	public Mono<String> buy() {
+		return orderService.createOrder()
+				.map(order -> "redirect:/orders/" + order.getId() + "?newOrder=true");
 	}
 }
