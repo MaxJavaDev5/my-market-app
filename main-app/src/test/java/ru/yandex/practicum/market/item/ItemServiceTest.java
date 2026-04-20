@@ -1,5 +1,8 @@
 package ru.yandex.practicum.market.item;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
 import ru.yandex.practicum.market.cart.CartItem;
 import ru.yandex.practicum.market.cart.CartRepository;
 import ru.yandex.practicum.market.order.OrderItemRepository;

@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.yandex.practicum.market.payment.client.ApiClient;
-import ru.yandex.practicum.market.payment.client.api.PaymentsApi;
+import ru.yandex.practicum.market.payment.client.api.DefaultApi;
 
 @Configuration
 @EnableConfigurationProperties(PaymentProperties.class)
@@ -16,7 +16,7 @@ public class PaymentClientConfig {
 	}
 
 	@Bean
-	public PaymentsApi paymentsApi(ApiClient paymentApiClient) {
-		return new PaymentsApi(paymentApiClient);
+	public DefaultApi paymentsApi(ApiClient paymentApiClient) {
+		return new DefaultApi(paymentApiClient);
 	}
 }

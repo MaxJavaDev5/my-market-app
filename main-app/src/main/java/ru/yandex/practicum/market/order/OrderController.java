@@ -48,8 +48,8 @@ public class OrderController {
 				.map(order ->
 						"redirect:/orders/" + order.getId() + "?newOrder=true")
 				.onErrorResume(IllegalArgumentException.class, e ->
-						Mono.just("redirect:/cart?paymentError=insufficient"))
+						Mono.just("redirect:/cart/items?paymentError=insufficient"))
 				.onErrorResume(IllegalStateException.class, e ->
-						Mono.just("redirect:/cart?paymentError=unavailable"));
+						Mono.just("redirect:/cart/items?paymentError=unavailable"));
 	}
 }

@@ -80,7 +80,7 @@ class OrderPaymentIntegrationTest {
 				.uri("/buy")
 				.exchange()
 				.expectStatus().is3xxRedirection()
-				.expectHeader().valueEquals(HttpHeaders.LOCATION, "/cart?paymentError=insufficient");
+				.expectHeader().valueEquals(HttpHeaders.LOCATION, "/cart/items?paymentError=insufficient");
 
 		assertThat(orderRepository.findAll().collectList().block()).isEmpty();
 		assertThat(cartRepository.findAll().collectList().block()).hasSize(1);
@@ -97,7 +97,7 @@ class OrderPaymentIntegrationTest {
 				.uri("/buy")
 				.exchange()
 				.expectStatus().is3xxRedirection()
-				.expectHeader().valueEquals(HttpHeaders.LOCATION, "/cart?paymentError=unavailable");
+				.expectHeader().valueEquals(HttpHeaders.LOCATION, "/cart/items?paymentError=unavailable");
 
 		assertThat(orderRepository.findAll().collectList().block()).isEmpty();
 		assertThat(cartRepository.findAll().collectList().block()).hasSize(1);
