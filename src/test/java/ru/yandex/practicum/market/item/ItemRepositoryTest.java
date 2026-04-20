@@ -1,25 +1,48 @@
 package ru.yandex.practicum.market.item;
 
+import ru.yandex.practicum.market.cart.CartRepository;
+import ru.yandex.practicum.market.order.OrderItemRepository;
+import ru.yandex.practicum.market.order.OrderRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+@SpringBootTest
 class ItemRepositoryTest {
 
 	@Autowired
 	ItemRepository itemRepository;
+
+	@Autowired
+	CartRepository cartRepository;
+
+	@Autowired
+	OrderRepository orderRepository;
+
+	@Autowired
+	OrderItemRepository orderItemRepository;
+
+	@BeforeEach
+	void cleanDb() {
+		orderItemRepository.deleteAll().block();
+		orderRepository.deleteAll().block();
+		cartRepository.deleteAll().block();
+		itemRepository.deleteAll().block();
+	}
 
 	@Test
 	void findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase_findsByTitle() {
 		saveItem("Product_Repository", 1500L, "Product_Description");
 
 		List<Item> found = itemRepository
-				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("Repository", "Repository");
+				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("Repository", "Repository")
+				.collectList()
+				.block();
 
 		assertThat(found).hasSize(1);
 		assertThat(found.get(0).getTitle()).isEqualTo("Product_Repository");
@@ -30,7 +53,9 @@ class ItemRepositoryTest {
 		saveItem("Product_TitleOnly", 100L, "Product_UniqueSearchToken_In_Description");
 
 		List<Item> found = itemRepository
-				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("UniqueSearchToken", "UniqueSearchToken");
+				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("UniqueSearchToken", "UniqueSearchToken")
+				.collectList()
+				.block();
 
 		assertThat(found).extracting(Item::getTitle).containsExactly("Product_TitleOnly");
 	}
@@ -40,7 +65,9 @@ class ItemRepositoryTest {
 		saveItem("Product_NoMatch", 1L, "Product_Desc");
 
 		List<Item> found = itemRepository
-				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("NonExistent", "NonExistent");
+				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("NonExistent", "NonExistent")
+				.collectList()
+				.block();
 
 		assertThat(found).isEmpty();
 	}
@@ -51,7 +78,9 @@ class ItemRepositoryTest {
 		saveItem("Product_OtherTitle", 20L, "Product_Needle_In_Description");
 
 		List<Item> found = itemRepository
-				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("Needle", "Needle");
+				.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("Needle", "Needle")
+				.collectList()
+				.block();
 
 		assertThat(found).extracting(Item::getTitle)
 				.containsExactlyInAnyOrder("Product_HasNeedleInTitle", "Product_OtherTitle");
@@ -61,12 +90,12 @@ class ItemRepositoryTest {
 	void saveAndFindById_returnsSameProduct() {
 		Item saved = saveItem("Product_RT", 500L, "Product_RT_Desc");
 
-		var found = itemRepository.findById(saved.getId());
+		var found = itemRepository.findById(saved.getId()).blockOptional();
 
 		assertThat(found).isPresent();
 		assertThat(found.get().getTitle()).isEqualTo("Product_RT");
 		assertThat(found.get().getPrice()).isEqualTo(500L);
-		assertThat(found.get().description()).isEqualTo("Product_RT_Desc");
+		assertThat(found.get().getDescription()).isEqualTo("Product_RT_Desc");
 	}
 
 	@Test
@@ -74,7 +103,7 @@ class ItemRepositoryTest {
 		saveItem("Product_All_One", 1L, null);
 		saveItem("Product_All_Two", 2L, null);
 
-		List<Item> all = itemRepository.findAll();
+		List<Item> all = itemRepository.findAll().collectList().block();
 
 		assertThat(all).hasSize(2);
 		assertThat(all).extracting(Item::getTitle).containsExactlyInAnyOrder("Product_All_One", "Product_All_Two");
@@ -85,6 +114,6 @@ class ItemRepositoryTest {
 		item.setTitle(title);
 		item.setPrice(price);
 		item.setDescription(description);
-		return itemRepository.save(item);
+		return itemRepository.save(item).block();
 	}
 }

@@ -1,25 +1,21 @@
 package ru.yandex.practicum.market.item;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
 @Table(name = "items")
 public class Item {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true, length = 128)
 	private String title;
 
-	@Column(length = 2048)
 	private String description;
 
-	@Column(name = "img_path")
 	private String imgPath;
 
-	@Column(nullable = false)
 	private long price;
 
 	@Transient
@@ -41,7 +37,17 @@ public class Item {
 		this.title = title;
 	}
 
-	public void setDescription(String description) {this.description = description;}
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getImgPath() {
+		return imgPath;
+	}
 
 	public void setImgPath(String imgPath) {
 		this.imgPath = imgPath;

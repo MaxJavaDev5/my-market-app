@@ -1,20 +1,25 @@
 package ru.yandex.practicum.market.cart;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "cart_items")
+@Table("cart_items")
 public class CartItem {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "item_id", nullable = false)
 	private Long itemId;
 
-	@Column(nullable = false)
 	private int count;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
 
 	public Long getItemId() {
 		return itemId;

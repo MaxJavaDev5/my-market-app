@@ -1,19 +1,19 @@
 package ru.yandex.practicum.market.order;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
 @Table(name = "orders")
 public class Order {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+	@Transient
 	private List<OrderItem> items = new ArrayList<>();
 
 	@Transient
@@ -33,6 +33,10 @@ public class Order {
 
 	public void setItems(List<OrderItem> items) {
 		this.items = items;
+	}
+
+	public long getTotalSum() {
+		return totalSum;
 	}
 
 	public void setTotalSum(long totalSum) {

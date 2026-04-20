@@ -1,10 +1,12 @@
 package ru.yandex.practicum.market.item;
 
+import reactor.core.publisher.Mono;
+
 import java.util.List;
 
 public interface ItemService {
 
-	List<Item> findAll(String search, String sort);
+	Mono<List<Item>> findAll(String search, String sort);
 
-	Item findById(Long id);
+	Mono<Item> findById(Long id);
 }

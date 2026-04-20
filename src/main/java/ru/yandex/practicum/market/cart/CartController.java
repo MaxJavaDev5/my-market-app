@@ -1,10 +1,11 @@
 package ru.yandex.practicum.market.cart;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Mono;
 
 @Controller
 public class CartController {
@@ -16,21 +17,26 @@ public class CartController {
 	}
 
 	@GetMapping("/cart/items")
-	public String getCart(Model model) {
-		model.addAttribute("items", cartService.getCartItems());
-		model.addAttribute("total", cartService.getTotalSum());
-		return "cart";
+	public Mono<Rendering> getCart() {
+		return cartService.getCartItems()
+				.collectList()
+				.zipWith(cartService.getTotalSum())
+				.map(tuple -> Rendering.view("cart")
+						.modelAttribute("items", tuple.getT1())
+						.modelAttribute("total", tuple.getT2())
+						.build());
 	}
 
 	@PostMapping("/cart/items")
-	public String updateCart(
-			@RequestParam Long id,
-			@RequestParam CartAction action,
-			Model model
+	public Mono<Rendering> updateCart(
+			@ModelAttribute UpdateCartForm form
 	) {
-		cartService.updateCart(id, action);
-		model.addAttribute("items", cartService.getCartItems());
-		model.addAttribute("total", cartService.getTotalSum());
-		return "cart";
+		return cartService.updateCart(form.getId(), form.getAction())
+				.then(cartService.getCartItems().collectList()
+						.zipWith(cartService.getTotalSum()))
+				.map(tuple -> Rendering.view("cart")
+						.modelAttribute("items", tuple.getT1())
+						.modelAttribute("total", tuple.getT2())
+						.build());
 	}
 }

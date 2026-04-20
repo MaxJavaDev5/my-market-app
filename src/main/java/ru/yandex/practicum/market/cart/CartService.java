@@ -1,14 +1,14 @@
 package ru.yandex.practicum.market.cart;
 
+import reactor.core.publisher.Flux;
 import ru.yandex.practicum.market.item.Item;
-
-import java.util.List;
+import reactor.core.publisher.Mono;
 
 public interface CartService {
 
-	void updateCart(Long itemId, CartAction action);
+	Mono<Void> updateCart(Long itemId, CartAction action);
 
-	List<Item> getCartItems();
+	Flux<Item> getCartItems();
 
-	long getTotalSum();
+	Mono<Long> getTotalSum();
 }
