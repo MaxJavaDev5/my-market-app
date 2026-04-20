@@ -9,3 +9,11 @@ spring:
   sql:
     init:
       mode: never
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+payment:
+  enabled: true
+  base-url: http://localhost:8081
