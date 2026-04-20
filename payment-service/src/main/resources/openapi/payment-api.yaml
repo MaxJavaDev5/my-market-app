@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+  title: Payment API
+  version: 1.0.0
+  description: Simple API for checking balance and charging money for an order.
+paths:
+  /payments/balance:
+    get:
+      operationId: getBalance
+      summary: Get current balance
+      description: Returns current available balance from payment service.
+      responses:
+        '200':
+          description: Balance loaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+  /payments/charge:
+    post:
+      operationId: charge
+      summary: Charge money
+      description: Tries to charge requested amount and returns result.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChargeRequest'
+      responses:
+        '200':
+          description: Charge operation finished
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeResponse'
+components:
+  schemas:
+    BalanceResponse:
+      type: object
+      description: Current balance in payment system.
+      required:
+        - balance
+      properties:
+        balance:
+          type: integer
+          format: int64
+          description: Current amount of money.
+    ChargeRequest:
+      type: object
+      description: Data required for charge operation.
+      required:
+        - amount
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          description: Optional order id from main app.
+        amount:
+          type: integer
+          format: int64
+          description: How much money should be charged.
+    ChargeResponse:
+      type: object
+      description: Result of charge operation.
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: True when charge is successful.
+        message:
+          type: string
+          description: Human readable result message.
+        balance:
+          type: integer
+          format: int64
+          description: Balance after charge attempt.
