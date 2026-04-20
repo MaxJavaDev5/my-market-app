@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.result.view.Rendering;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.market.payment.PaymentFailedException;
-import ru.yandex.practicum.market.payment.PaymentUnavailableException;
 
 @Controller
 public class OrderController {
@@ -49,9 +47,9 @@ public class OrderController {
 		return orderService.createOrder()
 				.map(order ->
 						"redirect:/orders/" + order.getId() + "?newOrder=true")
-				.onErrorResume(PaymentFailedException.class, e ->
+				.onErrorResume(IllegalArgumentException.class, e ->
 						Mono.just("redirect:/cart?paymentError=insufficient"))
-				.onErrorResume(PaymentUnavailableException.class, e ->
+				.onErrorResume(IllegalStateException.class, e ->
 						Mono.just("redirect:/cart?paymentError=unavailable"));
 	}
 }
