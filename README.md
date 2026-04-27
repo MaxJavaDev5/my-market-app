@@ -1,12 +1,15 @@
-# My Market App
+# My Market App (Multi-module)
 
-Витрина интернет-магазина на Spring Boot: **Spring WebFlux**, **Spring Data R2DBC**, Thymeleaf (реактивный), встроенная H2 в памяти.
-Функциональные возможности: просмотр товаров, корзина, оформление заказов.
+Проект разделен на 2 модуля:
+
+- `main-app` - витрина магазина (WebFlux + Thymeleaf + R2DBC + Redis cache + payment client)
+- `payment-service` - сервис оплаты (WebFlux, OpenAPI-generated API)
 
 ## Требования
 
 - Java 21
 - Maven 3.8+
+- Docker
 
 ## Сборка
 
@@ -14,29 +17,81 @@
 mvn clean package
 ```
 
+Сборка модулей по отдельности:
+
+```bash
+mvn -pl main-app package
+mvn -pl payment-service package
+```
+
 ## Тесты
 
 ```bash
-mvn test
+mvn -pl main-app,payment-service test
 ```
 
-## Запуск локально
+## Локальный запуск без Docker
+
+1. Запустить Redis:
 
 ```bash
-java -jar target/my-market-app-0.0.1-SNAPSHOT.jar
+docker run --rm -p 6379:6379 redis:7-alpine
 ```
 
-Приложение слушает порт **8080** : http://localhost:8080/
-
-## Docker
-
-Сборка образа (после `mvn clean package`):
+2. Запустить payment-service:
 
 ```bash
-docker build -t my-market-app .
-docker run -p 8080:8080 my-market-app
+mvn -pl payment-service spring-boot:run
 ```
 
-## База данных
+3. Запустить main-app:
 
-В режиме разработки используется H2 в памяти.
+```bash
+mvn -pl main-app spring-boot:run
+```
+
+- main-app: [http://localhost:8080](http://localhost:8080)
+- payment-service: [http://localhost:8081/payments/balance](http://localhost:8081/payments/balance)
+
+## Запуск через Docker Compose
+
+Перед запуском compose нужно собрать jar:
+
+```bash
+mvn -pl main-app,payment-service package -DskipTests
+docker compose up --build
+```
+
+## OpenAPI-first
+
+Контракт оплаты хранится в:
+
+- `payment-service/src/main/resources/openapi/payment-api.yaml`
+
+Генерация выполняется плагином `openapi-generator-maven-plugin`:
+
+- server API в `payment-service`
+- webclient client в `main-app`
+
+## Redis cache (main-app)
+
+Кэш используется для:
+
+- списка товаров (`findAll`)
+- карточки товара (`findById`)
+
+TTL в `main-app/src/main/resources/application.yml`:
+
+- `market.cache.item-list-ttl`
+- `market.cache.item-ttl`
+
+## Оплата в оформлении заказа
+
+При `POST /buy`:
+
+1. Считается сумма корзины.
+2. Проверяется баланс в payment-service.
+3. Выполняется списание.
+4. Только после успешной оплаты создается заказ и очищается корзина.
+
+Если оплата не проходит или payment-service недоступен, заказ не создается, корзина не очищается.
