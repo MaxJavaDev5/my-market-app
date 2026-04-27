@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.reactive.server.WebTestClient;
+
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.cart.CartAction;
 import ru.yandex.practicum.market.cart.CartRepository;
@@ -20,21 +21,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockUser;
 
 @SpringBootTest
 @AutoConfigureWebTestClient
-class OrderPaymentIntegrationTest {
+class OrderPaymentIntegrationTest
+{
 
 	@Autowired
 	private WebTestClient webTestClient;
+
 	@Autowired
 	private CartService cartService;
+
 	@Autowired
 	private CartRepository cartRepository;
+
 	@Autowired
 	private ItemRepository itemRepository;
+
 	@Autowired
 	private OrderRepository orderRepository;
+
 	@Autowired
 	private OrderItemRepository orderItemRepository;
 
@@ -42,8 +51,7 @@ class OrderPaymentIntegrationTest {
 	private PaymentGateway paymentGateway;
 
 	@BeforeEach
-	void setUp()
-	{
+	void setUp() {
 		orderItemRepository.deleteAll().block();
 		orderRepository.deleteAll().block();
 		cartRepository.deleteAll().block();
@@ -51,14 +59,15 @@ class OrderPaymentIntegrationTest {
 	}
 
 	@Test
-	void buy_success_createsOrderAndRedirectsToOrderPage()
-	{
+	void buy_success_createsOrderAndRedirectsToOrderPage() {
 		Item item = saveItem("ok-item", 200L);
 
 		cartService.updateCart(item.getId(), CartAction.PLUS).block();
 		when(paymentGateway.charge(anyLong(), isNull())).thenReturn(Mono.empty());
 
-		webTestClient.post()
+		webTestClient.mutateWith(mockUser())
+				.mutateWith(csrf())
+				.post()
 				.uri("/buy")
 				.exchange()
 				.expectStatus().is3xxRedirection()
@@ -76,7 +85,9 @@ class OrderPaymentIntegrationTest {
 		cartService.updateCart(item.getId(), CartAction.PLUS).block();
 		when(paymentGateway.charge(anyLong(), isNull())).thenReturn(Mono.error(new IllegalArgumentException("Insufficient funds")));
 
-		webTestClient.post()
+		webTestClient.mutateWith(mockUser())
+				.mutateWith(csrf())
+				.post()
 				.uri("/buy")
 				.exchange()
 				.expectStatus().is3xxRedirection()
@@ -93,7 +104,9 @@ class OrderPaymentIntegrationTest {
 		cartService.updateCart(item.getId(), CartAction.PLUS).block();
 		when(paymentGateway.charge(anyLong(), isNull())).thenReturn(Mono.error(new IllegalStateException("down")));
 
-		webTestClient.post()
+		webTestClient.mutateWith(mockUser())
+				.mutateWith(csrf())
+				.post()
 				.uri("/buy")
 				.exchange()
 				.expectStatus().is3xxRedirection()
