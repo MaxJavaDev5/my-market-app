@@ -6,6 +6,10 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
+
 @SpringBootTest(classes = PaymentServiceApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 class PaymentApiTest
@@ -15,8 +19,14 @@ class PaymentApiTest
 	private WebTestClient webTestClient;
 
 	@Test
+	void getBalance_returnsUnauthorized_whenTokenMissing()
+	{
+		webTestClient.get().uri("/payments/balance").exchange().expectStatus().isUnauthorized();
+	}
+
+	@Test
 	void getBalance_returnsCurrentBalance() {
-		webTestClient.get()
+		webTestClient.mutateWith(mockJwt()).get()
 				.uri("/payments/balance")
 				.exchange()
 				.expectStatus().isOk()
@@ -29,7 +39,9 @@ class PaymentApiTest
 	{
 		long before = getBalance();
 
-		webTestClient.post()
+		webTestClient.mutateWith(mockJwt())
+				.mutateWith(csrf())
+				.post()
 				.uri("/payments/charge")
 				.bodyValue("{\"amount\":1000,\"orderId\":1}")
 				.header("Content-Type", "application/json")
@@ -39,13 +51,15 @@ class PaymentApiTest
 				.jsonPath("$.success").isEqualTo(true);
 
 		long after = getBalance();
-		org.assertj.core.api.Assertions.assertThat(after).isEqualTo(before - 1000);
+		assertThat(after).isEqualTo(before - 1000);
 	}
 
 	@Test
 	void charge_returnsFailure_whenInsufficientFunds()
 	{
-		webTestClient.post()
+		webTestClient.mutateWith(mockJwt())
+				.mutateWith(csrf())
+				.post()
 				.uri("/payments/charge")
 				.bodyValue("{\"amount\":999999999}")
 				.header("Content-Type", "application/json")
@@ -56,17 +70,18 @@ class PaymentApiTest
 				.jsonPath("$.message").isEqualTo("Insufficient funds");
 	}
 
-	private long getBalance() {
-		final long[] result = new long[1];
+	private long getBalance()
+	{
+		final long[] holder = new long[1];
 
-		webTestClient.get()
+		webTestClient.mutateWith(mockJwt()).get()
 				.uri("/payments/balance")
 				.exchange()
 				.expectStatus().isOk()
 				.expectBody()
 				.jsonPath("$.balance")
-				.value(value -> result[0] = ((Number) value).longValue());
+				.value(v -> holder[0] = ((Number) v).longValue());
 
-		return result[0];
+		return holder[0];
 	}
 }
