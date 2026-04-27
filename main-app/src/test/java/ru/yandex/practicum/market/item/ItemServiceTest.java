@@ -1,25 +1,29 @@
 package ru.yandex.practicum.market.item;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
-import ru.yandex.practicum.market.cart.CartItem;
-import ru.yandex.practicum.market.cart.CartRepository;
-import ru.yandex.practicum.market.order.OrderItemRepository;
-import ru.yandex.practicum.market.order.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 
 import java.util.List;
+
+import ru.yandex.practicum.market.auth.UserEntity;
+import ru.yandex.practicum.market.auth.UserRepository;
+import ru.yandex.practicum.market.cart.CartItem;
+import ru.yandex.practicum.market.cart.CartRepository;
+import ru.yandex.practicum.market.order.OrderItemRepository;
+import ru.yandex.practicum.market.order.OrderRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-class ItemServiceTest {
+class ItemServiceTest
+{
 
 	@Autowired
 	ItemRepository itemRepository;
@@ -35,6 +39,8 @@ class ItemServiceTest {
 
 	@Autowired
 	ItemService itemService;
+	@Autowired
+	UserRepository userRepository;
 
 	@BeforeEach
 	void cleanDb() {
@@ -42,6 +48,7 @@ class ItemServiceTest {
 		orderRepository.deleteAll().block();
 		cartRepository.deleteAll().block();
 		itemRepository.deleteAll().block();
+		userRepository.deleteAll().block();
 	}
 
 	@Test
@@ -74,13 +81,29 @@ class ItemServiceTest {
 
 	@Test
 	void findById_whenInCart_returnsCartCount() {
+		UserEntity user = new UserEntity();
+		user.setUsername("test-user");
+		user.setPassword("pwd");
+		user.setRole("USER");
+		user.setEnabled(true);
+		user = userRepository.save(user).block();
+
 		Item saved = itemRepository.save(item("Product_Two", 200L, null)).block();
 		CartItem cartItem = new CartItem();
+		cartItem.setUserId(user.getId());
 		cartItem.setItemId(saved.getId());
 		cartItem.setCount(4);
 		cartRepository.save(cartItem).block();
 
-		Item found = itemService.findById(saved.getId()).block();
+		UsernamePasswordAuthenticationToken authentication =
+				new UsernamePasswordAuthenticationToken(
+						"test-user",
+						"pwd",
+						List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+		Item found = itemService.findById(saved.getId())
+				.contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication))
+				.block();
 
 		assertThat(found.getCount()).isEqualTo(4);
 	}
