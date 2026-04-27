@@ -1,5 +1,7 @@
 package ru.yandex.practicum.market.item;
 
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import ru.yandex.practicum.market.auth.UserRepository;
 import ru.yandex.practicum.market.cart.CartRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -14,12 +16,18 @@ public class ItemServiceImpl implements ItemService {
 	private final ItemRepository itemRepository;
 	private final CartRepository cartRepository;
 	private final ItemCacheService itemCacheService;
+	private final UserRepository userRepository;
 
-	public ItemServiceImpl(ItemRepository itemRepository, CartRepository cartRepository, ItemCacheService itemCacheService)
+	public ItemServiceImpl(
+			ItemRepository itemRepository,
+			CartRepository cartRepository,
+			ItemCacheService itemCacheService,
+			UserRepository userRepository)
 	{
 		this.itemRepository = itemRepository;
 		this.cartRepository = cartRepository;
 		this.itemCacheService = itemCacheService;
+		this.userRepository = userRepository;
 	}
 
 	@Override
@@ -87,12 +95,23 @@ public class ItemServiceImpl implements ItemService {
 
 	private Mono<Item> withCartCount(Item item)
 	{
-		return cartRepository.findByItemId(item.getId())
+		return getCurrentUserId()
+				.flatMap(userId -> cartRepository.findByUserIdAndItemId(userId, item.getId()))
+				.switchIfEmpty(cartRepository.findByItemId(item.getId()))
 				.map(ci -> ci.getCount())
 				.defaultIfEmpty(0)
 				.map(count -> {
 					item.setCount(count);
 					return item;
 				});
+	}
+
+	private Mono<Long> getCurrentUserId()
+	{
+		return ReactiveSecurityContextHolder.getContext()
+				.filter(context -> context.getAuthentication() != null && context.getAuthentication().isAuthenticated())
+				.map(context -> context.getAuthentication().getName())
+				.flatMap(userRepository::findByUsername)
+				.map(user -> user.getId());
 	}
 }
