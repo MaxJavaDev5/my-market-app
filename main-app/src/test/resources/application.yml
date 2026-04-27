@@ -6,6 +6,19 @@ spring:
   sql:
     init:
       mode: never
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            authorization-grant-type: client_credentials
+            client-id: test-client
+            client-secret: test-secret
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/realms/shop
 
 payment:
   enabled: false
