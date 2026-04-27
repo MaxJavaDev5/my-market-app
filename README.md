@@ -81,7 +81,17 @@ docker compose up -d keycloak
 3. Создайте realm:
    - realm name: `shop`
 
-4. Создайте client для `main-app` (OAuth2 client credentials).
+4. Создайте client для `main-app` (OAuth2 client credentials):
+   - client id: `shop-app`
+   - client authentication: `Client Id and Secret`
+   - grant type: `Client Credentials`
+   - сохраните secret (нужен для `main-app`)
+
+5. Создайте client для `payment-service` (resource server):
+   - можно использовать id `payment-service`
+   - доступ к payment endpoints идет по JWT токену от Keycloak
+
+   
 
 5. Создайте client для `payment-service`.
 ## OpenAPI-first
