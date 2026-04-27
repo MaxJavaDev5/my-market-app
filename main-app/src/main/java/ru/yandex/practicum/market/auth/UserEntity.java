@@ -1,4 +1,4 @@
-package ru.yandex.practicum.market.cart;
+package ru.yandex.practicum.market.auth;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,15 +7,17 @@ import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
-@Table("cart_items")
-public class CartItem {
-
+@Table(name = "users")
+public class UserEntity
+{
 	@Id
 	private Long id;
 
-	private Long itemId;
+	private String username;
 
-	private Long userId;
+	private String password;
 
-	private int count;
+	private String role;
+
+	private boolean enabled;
 }

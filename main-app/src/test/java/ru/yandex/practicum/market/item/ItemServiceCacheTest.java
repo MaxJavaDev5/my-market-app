@@ -6,6 +6,7 @@ import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import ru.yandex.practicum.market.auth.UserRepository;
 import ru.yandex.practicum.market.cart.CartRepository;
 
 import java.util.List;
@@ -20,6 +21,7 @@ class ItemServiceCacheTest
 	private ItemRepository itemRepository;
 	private CartRepository cartRepository;
 	private ItemCacheService itemCacheService;
+	private UserRepository userRepository;
 	private ItemServiceImpl itemService;
 
 	@BeforeEach
@@ -28,7 +30,8 @@ class ItemServiceCacheTest
 		itemRepository = Mockito.mock(ItemRepository.class);
 		cartRepository = Mockito.mock(CartRepository.class);
 		itemCacheService = Mockito.mock(ItemCacheService.class);
-		itemService = new ItemServiceImpl(itemRepository, cartRepository, itemCacheService);
+		userRepository = Mockito.mock(UserRepository.class);
+		itemService = new ItemServiceImpl(itemRepository, cartRepository, itemCacheService, userRepository);
 	}
 
 	@Test
@@ -40,7 +43,6 @@ class ItemServiceCacheTest
 		when(itemRepository.findAll()).thenReturn(Flux.just(item));
 		when(itemCacheService.putItemList(eq(null), eq("NO"), any())).thenReturn(Mono.empty());
 		when(cartRepository.findByItemId(1L)).thenReturn(Mono.empty());
-
 		StepVerifier.create(itemService.findAll(null, "NO"))
 				.expectNextMatches(items -> items.size() == 1 && items.get(0).getId().equals(1L))
 				.verifyComplete();
@@ -57,7 +59,6 @@ class ItemServiceCacheTest
 		when(itemCacheService.getItemList(null, "NO")).thenReturn(Mono.just(List.of(cached)));
 		when(itemRepository.findAll()).thenReturn(Flux.empty());
 		when(cartRepository.findByItemId(2L)).thenReturn(Mono.empty());
-
 		StepVerifier.create(itemService.findAll(null, "NO"))
 				.expectNextCount(1)
 				.verifyComplete();
@@ -73,7 +74,6 @@ class ItemServiceCacheTest
 		when(itemCacheService.getItem(3L)).thenReturn(Mono.just(cached));
 		when(itemRepository.findById(3L)).thenReturn(Mono.empty());
 		when(cartRepository.findByItemId(3L)).thenReturn(Mono.empty());
-
 		StepVerifier.create(itemService.findById(3L))
 				.expectNextMatches(item -> item.getId().equals(3L))
 				.verifyComplete();

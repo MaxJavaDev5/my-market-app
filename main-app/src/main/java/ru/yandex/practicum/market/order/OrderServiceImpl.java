@@ -1,7 +1,10 @@
 package ru.yandex.practicum.market.order;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import ru.yandex.practicum.market.cart.CartRepository;
 import ru.yandex.practicum.market.cart.CartService;
+import ru.yandex.practicum.market.auth.UserRepository;
 import ru.yandex.practicum.market.item.Item;
 import ru.yandex.practicum.market.item.ItemRepository;
 import ru.yandex.practicum.market.payment.PaymentGateway;
@@ -20,13 +23,15 @@ public class OrderServiceImpl implements OrderService {
 	private final PaymentGateway paymentGateway;
 	private final OrderRepository orderRepository;
 	private final OrderItemRepository orderItemRepository;
+	private final UserRepository userRepository;
 
 	public OrderServiceImpl(OrderRepository orderRepository,
 			OrderItemRepository orderItemRepository,
 			CartService cartService,
 			CartRepository cartRepository,
 			ItemRepository itemRepository,
-			PaymentGateway paymentGateway)
+			PaymentGateway paymentGateway,
+			UserRepository userRepository)
 	{
 		this.orderRepository = orderRepository;
 		this.orderItemRepository = orderItemRepository;
@@ -34,42 +39,46 @@ public class OrderServiceImpl implements OrderService {
 		this.cartRepository = cartRepository;
 		this.itemRepository = itemRepository;
 		this.paymentGateway = paymentGateway;
+		this.userRepository = userRepository;
 	}
 
 	@Override
 	public Mono<Order> createOrder()
 	{
-		return cartService.getCartItems()
-				.collectList()
-				.flatMap(this::chargeAndSaveOrder);
+		return getCurrentUserId()
+				.flatMap(userId -> cartService.getCartItems()
+						.collectList()
+						.flatMap(cartItems -> chargeAndSaveOrder(userId, cartItems)));
 	}
 
 	@Override
 	public Mono<Order> findById(Long id)
 	{
-		return loadOrderWithItems(id);
+		return getCurrentUserId()
+				.flatMap(userId -> loadOrderWithItems(id, userId));
 	}
 
 	@Override
 	public Flux<Order> findAll()
 	{
-		return orderRepository.findAll()
+		return getCurrentUserId()
+				.flatMapMany(orderRepository::findAllByUserId)
 				.flatMap(order ->
-						loadOrderWithItems(order.getId()));
+						loadOrderWithItems(order.getId(), order.getUserId()));
 	}
 
-	private Mono<Order> chargeAndSaveOrder(List<Item> cartItems)
+	private Mono<Order> chargeAndSaveOrder(Long userId, List<Item> cartItems)
 	{
 		long total = calcTotal(cartItems);
 
 		return paymentGateway.charge(total, null)
-				.then(saveOrderAndClearCart(cartItems));
+				.then(saveOrderAndClearCart(userId, cartItems));
 	}
 
-	private Mono<Order> loadOrderWithItems(Long id)
+	private Mono<Order> loadOrderWithItems(Long id, Long userId)
 	{
-		return orderRepository.findById(id)
-				.switchIfEmpty(Mono.error(new Exception("Order not found: " + id)))
+		return orderRepository.findByIdAndUserId(id, userId)
+				.switchIfEmpty(Mono.error(new Exception("Order not found: " + id + " for user " + userId)))
 				.flatMap(this::fillOrderItemsAndTotal);
 	}
 
@@ -101,14 +110,15 @@ public class OrderServiceImpl implements OrderService {
 				});
 	}
 
-	private Mono<Order> saveOrderAndClearCart(List<Item> cartItems)
+	private Mono<Order> saveOrderAndClearCart(Long userId, List<Item> cartItems)
 	{
 		Order draft = new Order();
+		draft.setUserId(userId);
 		return orderRepository
 				.save(draft)
 				.flatMap(order -> saveOrderItems(order.getId(), cartItems).thenReturn(order.getId()))
-				.flatMap(orderId -> cartRepository.deleteAll().thenReturn(orderId))
-				.flatMap(this::loadOrderWithItems);
+				.flatMap(orderId -> cartRepository.deleteAllByUserId(userId).thenReturn(orderId))
+				.flatMap(orderId -> loadOrderWithItems(orderId, userId));
 	}
 
 	private Mono<Void> saveOrderItems(Long orderId, List<Item> cartItems) {
@@ -138,5 +148,14 @@ public class OrderServiceImpl implements OrderService {
 		return lines.stream()
 				.mapToLong(line -> line.getItem().getPrice() * line.getCount())
 				.sum();
+	}
+
+	private Mono<Long> getCurrentUserId() {
+		return ReactiveSecurityContextHolder.getContext()
+				.map(securityContext -> securityContext.getAuthentication())
+				.map(Authentication::getName)
+				.flatMap(userRepository::findByUsername)
+				.map(user -> user.getId())
+				.defaultIfEmpty(1L);
 	}
 }

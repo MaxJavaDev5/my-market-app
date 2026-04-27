@@ -1,8 +1,10 @@
 package ru.yandex.practicum.payment.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
+
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.payment.api.DefaultApi;
 import ru.yandex.practicum.payment.model.BalanceResponse;
@@ -23,14 +25,20 @@ public class PaymentsController implements DefaultApi {
 	@Override
 	public Mono<ResponseEntity<BalanceResponse>> getBalance(ServerWebExchange exchange)
 	{
-		return Mono.just(ResponseEntity.ok(paymentBalanceService.getBalance()));
+		return currentAccountId(exchange).map(accountId ->
+				ResponseEntity.ok(paymentBalanceService.getBalance(accountId)));
 	}
 
 	@Override
 	public Mono<ResponseEntity<ChargeResponse>> charge(Mono<ChargeRequest> chargeRequest, ServerWebExchange exchange)
 	{
-		return chargeRequest
-				.map(request -> paymentBalanceService.charge(request.getAmount()))
-				.map(ResponseEntity::ok);
+		return currentAccountId(exchange).flatMap(accountId ->
+				chargeRequest.map(request -> paymentBalanceService.charge(accountId, request.getAmount()))
+						.map(ResponseEntity::ok));
+	}
+
+	private Mono<String> currentAccountId(ServerWebExchange exchange)
+	{
+		return exchange.getPrincipal().cast(Authentication.class).map(Authentication::getName);
 	}
 }

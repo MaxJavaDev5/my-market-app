@@ -38,7 +38,7 @@ class OrderRepositoryTest {
 	@Test
 	void save_persistsOrderWithLineItems() {
 		Item product = saveProduct("Product_OrderRepo_One", 100L);
-		Order order = orderRepository.save(new Order()).block();
+		Order order = orderRepository.save(newOrderForUser()).block();
 
 		OrderItem orderItem = new OrderItem();
 		orderItem.setOrderId(order.getId());
@@ -58,7 +58,7 @@ class OrderRepositoryTest {
 
 	@Test
 	void findById_emptyOrder_returnsOrderWithNoItems() {
-		Order saved = orderRepository.save(new Order()).block();
+		Order saved = orderRepository.save(newOrderForUser()).block();
 
 		List<OrderItem> lines = orderItemRepository.findByOrderId(saved.getId()).collectList().block();
 
@@ -67,9 +67,9 @@ class OrderRepositoryTest {
 
 	@Test
 	void findAll_returnsAllPersistedOrders() {
-		orderRepository.save(new Order()).block();
+		orderRepository.save(newOrderForUser()).block();
 		Item p = saveProduct("Product_OrderRepo_Two", 1L);
-		Order order = orderRepository.save(new Order()).block();
+		Order order = orderRepository.save(newOrderForUser()).block();
 		OrderItem orderItem = new OrderItem();
 		orderItem.setOrderId(order.getId());
 		orderItem.setItemId(p.getId());
@@ -85,7 +85,7 @@ class OrderRepositoryTest {
 	void save_multipleOrderItemsOnSameOrder() {
 		Item productA = saveProduct("Product_OrderRepo_A", 10L);
 		Item productB = saveProduct("Product_OrderRepo_B", 20L);
-		Order order = orderRepository.save(new Order()).block();
+		Order order = orderRepository.save(newOrderForUser()).block();
 
 		OrderItem first = new OrderItem();
 		first.setOrderId(order.getId());
@@ -108,5 +108,11 @@ class OrderRepositoryTest {
 		item.setTitle(title);
 		item.setPrice(price);
 		return itemRepository.save(item).block();
+	}
+
+	private Order newOrderForUser() {
+		Order order = new Order();
+		order.setUserId(1L);
+		return order;
 	}
 }

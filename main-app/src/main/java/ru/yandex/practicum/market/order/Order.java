@@ -17,6 +17,8 @@ public class Order {
 	@Id
 	private Long id;
 
+	private Long userId;
+
 	@Transient
 	private List<OrderItem> items = new ArrayList<>();
 

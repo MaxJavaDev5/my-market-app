@@ -1,7 +1,7 @@
 package ru.yandex.practicum.market.item;
 
-import ru.yandex.practicum.market.cart.CartAction;
-import ru.yandex.practicum.market.cart.CartService;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -9,15 +9,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
+import reactor.core.publisher.Mono;
+import ru.yandex.practicum.market.cart.CartAction;
+import ru.yandex.practicum.market.cart.CartService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockUser;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
@@ -33,7 +36,8 @@ class ItemControllerTest {
 	CartService cartService;
 
 	@Test
-	void getItems_returnsItemsView() {
+	void getItems_returnsItemsView()
+	{
 		when(itemService.findAll(null, "NO")).thenReturn(Mono.just(List.of()));
 
 		webTestClient.get().uri("/items")
@@ -69,7 +73,8 @@ class ItemControllerTest {
 	}
 
 	@Test
-	void getItem_returnsItemView() {
+	void getItem_returnsItemView()
+	{
 		Item item = new Item();
 		item.setId(1L);
 		item.setTitle("Product");
@@ -86,7 +91,9 @@ class ItemControllerTest {
 	void postItems_redirectWhenSearchMissing_usesEmptySearchInUrl() {
 		when(cartService.updateCart(anyLong(), any())).thenReturn(Mono.empty());
 
-		webTestClient.post()
+		webTestClient.mutateWith(mockUser())
+				.mutateWith(csrf())
+				.post()
 				.uri(uriBuilder -> uriBuilder.path("/items")
 						.queryParam("id", "1")
 						.queryParam("action", "MINUS")
@@ -103,7 +110,8 @@ class ItemControllerTest {
 	}
 
 	@Test
-	void postItemById_updatesCartAndReturnsItemView() {
+	void postItemById_updatesCartAndReturnsItemView()
+	{
 		Item item = new Item();
 		item.setId(7L);
 		item.setTitle("Product_Seven");
@@ -111,7 +119,9 @@ class ItemControllerTest {
 		when(cartService.updateCart(anyLong(), any())).thenReturn(Mono.empty());
 		when(itemService.findById(7L)).thenReturn(Mono.just(item));
 
-		webTestClient.post()
+		webTestClient.mutateWith(mockUser())
+				.mutateWith(csrf())
+				.post()
 				.uri(uriBuilder -> uriBuilder.path("/items/7")
 						.queryParam("action", "PLUS")
 						.build())
