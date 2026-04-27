@@ -62,6 +62,28 @@ mvn -pl main-app,payment-service package -DskipTests
 docker compose up --build
 ```
 
+Keycloak поднимается в том же compose на `http://localhost:8180` (admin/admin).
+
+## Локальная настройка Keycloak (ручная)
+
+Для security используйте локальный Keycloak из `docker-compose.yml`.
+
+1. Запуск только Keycloak :
+
+```bash
+docker compose up -d keycloak
+```
+
+2. Откройте [http://localhost:8180](http://localhost:8180) и войдите в admin console:
+   - username: `admin`
+   - password: `admin`
+
+3. Создайте realm:
+   - realm name: `shop`
+
+4. Создайте client для `main-app` (OAuth2 client credentials).
+
+5. Создайте client для `payment-service`.
 ## OpenAPI-first
 
 Контракт оплаты хранится в:
