@@ -1,14 +1,15 @@
 package ru.yandex.practicum.market.item;
 
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import ru.yandex.practicum.market.auth.UserRepository;
-import ru.yandex.practicum.market.cart.CartRepository;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 import java.util.Comparator;
 import java.util.List;
+
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.yandex.practicum.market.auth.UserRepository;
+import ru.yandex.practicum.market.cart.CartRepository;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -49,23 +50,19 @@ public class ItemServiceImpl implements ItemService {
 
 	private Mono<List<Item>> loadItemsFromDbAndCache(String search, String sort)
 	{
-		return loadItemsFromDb(search, sort)
-				.flatMap(items ->
-						itemCacheService.putItemList(search, sort, items).thenReturn(items));
+		return loadItemsFromDb(search, sort).flatMap(items ->
+				itemCacheService.putItemList(search, sort, items).thenReturn(items));
 	}
 
 	private Mono<Item> loadItemFromDbAndCache(Long id)
 	{
-		return itemRepository.findById(id)
-				.flatMap(item ->
-						itemCacheService.putItem(item).thenReturn(item));
+		return itemRepository.findById(id).flatMap(item ->
+				itemCacheService.putItem(item).thenReturn(item));
 	}
 
 	private Mono<List<Item>> applyCartCounts(List<Item> items)
 	{
-		return Flux.fromIterable(items)
-				.concatMap(this::withCartCount)
-				.collectList();
+		return Flux.fromIterable(items).concatMap(this::withCartCount).collectList();
 	}
 
 	private Mono<List<Item>> loadItemsFromDb(String search, String sort)
@@ -74,11 +71,11 @@ public class ItemServiceImpl implements ItemService {
 				? itemRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search)
 				: itemRepository.findAll();
 
-		return flux.collectList()
-				.map(list -> {
-					sortInPlace(list, sort);
-					return list;
-				});
+		return flux.collectList().map(list ->
+		{
+			sortInPlace(list, sort);
+			return list;
+		});
 	}
 
 	private void sortInPlace(List<Item> items, String sort)
@@ -96,8 +93,7 @@ public class ItemServiceImpl implements ItemService {
 	private Mono<Item> withCartCount(Item item)
 	{
 		return getCurrentUserId()
-				.flatMap(userId -> cartRepository.findByUserIdAndItemId(userId, item.getId()))
-				.switchIfEmpty(cartRepository.findByItemId(item.getId()))
+				.flatMap(uid -> cartRepository.findByUserIdAndItemId(uid, item.getId()))
 				.map(ci -> ci.getCount())
 				.defaultIfEmpty(0)
 				.map(count -> {
@@ -112,6 +108,6 @@ public class ItemServiceImpl implements ItemService {
 				.filter(context -> context.getAuthentication() != null && context.getAuthentication().isAuthenticated())
 				.map(context -> context.getAuthentication().getName())
 				.flatMap(userRepository::findByUsername)
-				.map(user -> user.getId());
+				.map(u -> u.getId());
 	}
 }

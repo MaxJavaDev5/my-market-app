@@ -5,7 +5,7 @@ import ru.yandex.practicum.payment.model.ChargeResponse;
 
 public interface PaymentBalanceService {
 
-	BalanceResponse getBalance();
+	BalanceResponse getBalance(String accountId);
 
-	ChargeResponse charge(long amount);
+	ChargeResponse charge(String accountId, long amount);
 }
